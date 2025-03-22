@@ -1,16 +1,26 @@
 import cv2
 
-
-# Set up camera capture
+# Set up camera motion capture
 cam = cv2.VideoCapture(0)
-frame_height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
-frame_width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter('output.mp4', fourcc, 20.0, (frame_width, frame_height))
-
+fgbg = cv2.createBackgroundSubtractorMOG2()
 while True:
     ret, frame = cam.read()
-    out.write(frame)
-    cv2.imshow('Camera', frame)
+    if not ret:
+        break
+
+    blurred = cv2.GaussianBlur(frame, (5, 5), 0)
+    fgmask = fgbg.apply(frame)
+    contours, _ = cv2.findContours(fgmask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    filtered_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 10000]
+
+    for cnt in filtered_contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+    cv2.imshow('Camera Feed', frame)
     if cv2.waitKey(1) == ord('q'):
         break
+
+# Release camera capture object
+cam.release()
+cv2.destroyAllWindows()
