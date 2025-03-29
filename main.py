@@ -1,5 +1,5 @@
 import cv2
-
+import datetime
 from notification_utils import send_telegram_alert
 
 # Set up camera motion capture
@@ -15,6 +15,20 @@ while True:
     ret, frame = cam.read()
     if not ret:
         break
+
+    height, width, _ = frame.shape
+
+    # Get current timestamp
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Calculate bottom-right position
+    text_size = cv2.getTextSize(timestamp, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
+    text_x = width - text_size[0] - 10
+    text_y = height - 10
+
+    # Add timestamp to frame
+    cv2.putText(img=frame, text=timestamp, org=(text_x, text_y),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1,
+                color=(0, 255, 255), thickness=2, lineType=cv2.LINE_AA)
 
     fgmask = fgbg.apply(frame)
     fgmask = cv2.GaussianBlur(fgmask, (21, 21), 0)
@@ -33,8 +47,8 @@ while True:
     status_list.append(status)
     status_list = status_list[-2:]  # Keep only the last two statuses in the status_list
 
-    if status_list == [1, 0]:
-        send_telegram_alert()
+    # if status_list == [1, 0]:
+    #     send_telegram_alert()
 
     cv2.imshow('Camera Feed', frame)
     if cv2.waitKey(1) == ord('q'):
