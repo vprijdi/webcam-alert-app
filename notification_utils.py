@@ -9,14 +9,18 @@ def send_telegram_alert(photo_location):
     chat_id = os.getenv("WEBCAM_ALERT_BOT_CHATID")
 
     url = f'https://api.telegram.org/bot{token}/sendPhoto'
-    params = {
+    photo = open(photo_location, 'rb')
+
+    data = {
         'chat_id': chat_id,
-        'photo': photo_location,
         'caption': "New object detected on camera"
     }
+    files = {
+        'photo': photo
+    }
 
-    response = requests.get(url, params=params)
+    response = requests.post(url, data=data, files=files)
 
 
 if __name__ == "__main__":
-    send_telegram_alert("https://picsum.photos/200/300")
+    send_telegram_alert("images\\image1.png")
