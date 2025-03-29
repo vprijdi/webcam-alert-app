@@ -8,10 +8,12 @@ while True:
     if not ret:
         break
 
-    blurred = cv2.GaussianBlur(frame, (5, 5), 0)
     fgmask = fgbg.apply(frame)
+    fgmask = cv2.GaussianBlur(fgmask, (21, 21), 0)
+    fgmask = cv2.dilate(fgmask, None, iterations=2)
+    
     contours, _ = cv2.findContours(fgmask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    filtered_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 10000]
+    filtered_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 20000]
 
     for cnt in filtered_contours:
         x, y, w, h = cv2.boundingRect(cnt)
