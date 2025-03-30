@@ -1,23 +1,27 @@
+import shutil
 import cv2
 import datetime
 import os
-import glob
 import atexit
 from notification_utils import send_telegram_alert
 
 
-def cleanup_images_folder():
-    print("Cleaning up images folder...")
-    for file in glob.glob("images/*"):
-        os.remove(file)
-        print(f"Removed {file}")
+TEMP_DIR = "images"
 
 
-atexit.register(cleanup_images_folder)
+def remove_folder():
+    if os.path.exists(TEMP_DIR):
+        shutil.rmtree(TEMP_DIR)
+
+
+atexit.register(remove_folder)
 
 # Set up camera motion capture
 cam = cv2.VideoCapture(0)
 fgbg = cv2.createBackgroundSubtractorMOG2()
+
+# Create directory to temporarily store frames where motion is detected by the camera
+os.makedirs(TEMP_DIR, exist_ok=True)
 
 status_list = []
 frame_count = 0
@@ -60,7 +64,7 @@ while True:
 
         if rectangle.any():
             status = 1  # object is currently in the frame
-            cv2.imwrite(f"images\\image{frame_count}.png", frame)
+            cv2.imwrite(f"{TEMP_DIR}\\image{frame_count}.png", frame)
             frame_count += 1
 
     status_list.append(status)
@@ -68,7 +72,7 @@ while True:
 
     # Send alert when object leaves frame (when status changes from 1 to 0)
     if status_list == [1, 0]:
-        image = f"images\\image{int(frame_count / 2)}.png"
+        image = f"{TEMP_DIR}\\image{int(frame_count / 2)}.png"
         send_telegram_alert(image)
 
     cv2.imshow('Camera Feed', frame)
